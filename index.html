@@ -64,22 +64,58 @@
         .stat .val.blue { color: #4fc3f7; }
         .stat .val.gold { color: #ffd700; }
 
-        /* 中央広告 */
-        .ad-banner {
-            margin: 10px 12px; padding: 14px 16px; flex-shrink: 0;
-            background: linear-gradient(135deg, rgba(0,168,68,0.15), rgba(0,200,83,0.08));
-            border: 2px solid rgba(0,200,83,0.45); border-radius: 16px;
-            text-align: center; box-shadow: 0 0 24px rgba(0,200,83,0.12);
+        /* さりげない広告枠 → 条件で開く */
+        .ad-frame {
+            margin: 8px 12px; flex-shrink: 0;
+            border-radius: 14px; overflow: hidden;
+            border: 1px solid rgba(0,200,83,0.2);
+            background: rgba(22,22,26,0.85);
+            transition: border-color 0.4s, box-shadow 0.4s;
         }
-        .ad-banner p { font-size: 0.78rem; color: #ccc; line-height: 1.5; margin-bottom: 10px; }
-        .ad-banner .en { font-size: 0.62rem; color: var(--muted); margin-bottom: 8px; }
+        .ad-frame.open {
+            border-color: rgba(0,200,83,0.5);
+            box-shadow: 0 0 20px rgba(0,200,83,0.1);
+        }
+        .ad-teaser {
+            padding: 10px 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            font-size: 0.72rem; color: #aaa; text-align: left;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ad-teaser:hover { color: #ccc; }
+        .ad-teaser .arrow { color: var(--accent); font-size: 0.85rem; transition: transform 0.3s; }
+        .ad-frame.open .ad-teaser .arrow { transform: rotate(90deg); }
+        .ad-body {
+            max-height: 0; overflow: hidden; opacity: 0;
+            transition: max-height 0.45s ease, opacity 0.35s, padding 0.35s;
+            padding: 0 14px;
+        }
+        .ad-frame.open .ad-body {
+            max-height: 200px; opacity: 1; padding: 0 14px 14px;
+        }
+        .ad-body p { font-size: 0.75rem; color: #bbb; line-height: 1.5; margin-bottom: 8px; }
+        .ad-body .en { font-size: 0.62rem; color: var(--muted); }
         .ad-link {
-            display: block; padding: 12px 16px; border-radius: 12px;
+            display: block; padding: 11px 14px; border-radius: 10px; margin-top: 8px;
             background: linear-gradient(135deg, #00a844, #00c853);
-            color: #000; font-weight: 800; font-size: 0.9rem;
-            text-decoration: none; letter-spacing: 0.03em;
+            color: #000; font-weight: 800; font-size: 0.82rem;
+            text-decoration: none; text-align: center;
         }
         .ad-link:active { transform: scale(0.98); }
+        .studio-credit {
+            text-align: center; padding: 4px 16px 0; flex-shrink: 0;
+        }
+        .studio-credit a {
+            font-size: 0.58rem; color: #555; text-decoration: none;
+            border-bottom: 1px solid #333;
+        }
+        .studio-credit a:hover { color: #888; }
+        .flow-hint {
+            font-size: 0.62rem; color: #666; text-align: center;
+            margin: 4px 16px 0; flex-shrink: 0; font-style: italic;
+            animation: hintFade 0.6s ease;
+        }
+        @keyframes hintFade { from { opacity:0; } to { opacity:1; } }
 
         /* 仕事エリア */
         .job-zone {
@@ -129,6 +165,7 @@
         }
         .volume-row label { font-size: 0.65rem; color: var(--muted); }
         .volume-row input { width: 100%; margin-top: 6px; accent-color: var(--accent); }
+        .hidden { display: none !important; }
         .footer-note {
             padding: 8px 16px 20px; font-size: 0.58rem; color: #444; text-align: center; flex-shrink: 0;
         }
@@ -166,13 +203,26 @@
                 </div>
             </div>
 
-            <!-- 中央広告 -->
-            <div class="ad-banner">
-                <p class="en">Join the crew — fictional promo</p>
-                <p>同じ苦しみを分かち合う仲間を募集してるぜ。</p>
-                <a class="ad-link" href="https://www.uber.com/signup/drive/deliver/?invite_code=mwxmfvc"
-                   target="_blank" rel="noopener noreferrer">＞＞ ここから一緒に稼ぐ ＜＜</a>
+            <!-- さりげない導線：タップで枠が開く -->
+            <div class="ad-frame" id="adFrame">
+                <div class="ad-teaser" id="adTeaser">
+                    <span>夜更かしの仲間、いる？<span style="opacity:0.6"> / Know that feeling?</span></span>
+                    <span class="arrow">›</span>
+                </div>
+                <div class="ad-body">
+                    <p class="en">Fictional promo — not affiliated with any real service</p>
+                    <p>同じ苦しみを分かち合う仲間を、さりげなく募集してる。</p>
+                    <a class="ad-link" href="https://www.uber.com/signup/drive/deliver/?invite_code=mwxmfvc"
+                       target="_blank" rel="noopener noreferrer">＞＞ ここから一緒に稼ぐ ＜＜</a>
+                </div>
             </div>
+            <p class="flow-hint hidden" id="flowHint"></p>
+
+            <p class="studio-credit">
+                <a href="https://suzuki-total-service.vercel.app/" target="_blank" rel="noopener noreferrer">
+                    a Suzuki Total Service game
+                </a>
+            </p>
 
             <div class="job-zone" id="jobZone">
                 <div class="mode-select" id="modeSelect">
@@ -231,7 +281,23 @@
 
         let rating = 72, response = 94, chips = 0, gross = 0;
         let online = false, playing = false, currentJob = null;
-        let jobTimer = null;
+        let jobTimer = null, refuseCount = 0;
+
+        const adFrame = document.getElementById('adFrame');
+        const adTeaser = document.getElementById('adTeaser');
+        const flowHint = document.getElementById('flowHint');
+
+        adTeaser.addEventListener('click', () => adFrame.classList.toggle('open'));
+
+        function openAdSubtle() {
+            adFrame.classList.add('open');
+        }
+
+        function showFlowHint(text) {
+            flowHint.textContent = text;
+            flowHint.classList.remove('hidden');
+            setTimeout(() => flowHint.classList.add('hidden'), 4000);
+        }
 
         const els = {
             clock: document.getElementById('clock'),
@@ -320,6 +386,7 @@
             if (!currentJob) return;
             clearTimeout(jobTimer);
             chips += 1;
+            refuseCount++;
             rating = clamp(rating - (currentJob.pay >= 300 ? 8 : 5), 0, 100);
             response = clamp(response - (currentJob.pay >= 300 ? 10 : 7), 0, 100);
             updateHUD();
@@ -328,6 +395,13 @@
                 : `100円断り…気持ちいい\nRefused! Chip +1 but Rating ↓`;
             showResult(msg);
             playRefuse();
+            if (refuseCount === 2) {
+                showFlowHint('……評価は下がる。でも、仲間が欲しいだけかも。↑');
+                openAdSubtle();
+            } else if (rating < 55) {
+                showFlowHint('赤番続き… 上の枠、見といて。 / Check the banner above.');
+                openAdSubtle();
+            }
             setTimeout(nextJob, 1300);
         }
 
