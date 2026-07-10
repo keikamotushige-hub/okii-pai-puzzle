@@ -32,20 +32,15 @@
             justify-content: center;
             padding: 12px;
             color: var(--text);
-            overflow: hidden;
         }
 
-        /* スマホ筐体 */
         .phone {
             width: var(--phone-w);
-            height: min(780px, 92dvh);
+            height: min(820px, 94dvh);
             background: var(--bg);
             border-radius: 36px;
             border: 3px solid #2c2c34;
-            box-shadow:
-                0 0 0 1px #111,
-                0 24px 80px rgba(0,0,0,0.7),
-                inset 0 1px 0 rgba(255,255,255,0.06);
+            box-shadow: 0 0 0 1px #111, 0 24px 80px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -53,105 +48,177 @@
         }
 
         .notch {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 28px;
-            background: #000;
-            border-radius: 0 0 18px 18px;
-            z-index: 100;
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 28px; background: #000;
+            border-radius: 0 0 18px 18px; z-index: 100;
         }
 
-        /* 配達アプリ風背景 — background-image で差し替え可能 */
         .app-screen {
             flex: 1;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            /*
-             * 実画像を使う場合は下のコメントを外してパスを指定:
-             * background-image: url('delivery-bg.jpg');
-             */
-            background-image:
-                linear-gradient(180deg, rgba(8,8,12,0.92) 0%, rgba(8,8,12,0.75) 40%, rgba(8,8,12,0.95) 100%),
-                radial-gradient(ellipse at 50% 0%, rgba(0,200,83,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 80%, rgba(255,61,87,0.05) 0%, transparent 50%),
-                repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 39px, rgba(255,255,255,0.015) 40px);
-            background-size: cover, cover, cover, 100% 40px;
-            background-position: center;
             background-color: #0d0d12;
         }
 
-        /* ステータスバー */
+        /* ヒーロー画像 */
+        .hero {
+            position: relative;
+            height: 110px;
+            margin: 32px 12px 0;
+            border-radius: 18px;
+            overflow: hidden;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center 40%;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(8,8,12,0.85) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 12px 14px;
+        }
+
+        .hero-overlay h1 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+        }
+
+        .hero-overlay .sub {
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 2px;
+        }
+
         .status-bar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 36px 20px 8px;
+            padding: 10px 20px;
             font-size: 0.72rem;
             color: var(--muted);
-            z-index: 10;
+            z-index: 20;
         }
 
         .status-bar .time { font-weight: 600; color: var(--text); font-size: 0.85rem; }
 
-        /* ヘッダー */
-        .app-header {
-            padding: 8px 20px 16px;
+        /* ステータスグリッド */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 10px 12px 8px;
             z-index: 10;
         }
 
-        .app-header h1 {
+        .stat-card {
+            background: rgba(22,22,26,0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 10px 12px;
+        }
+
+        .stat-card.wide {
+            grid-column: 1 / -1;
+        }
+
+        .stat-label {
+            font-size: 0.62rem;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
             font-size: 1.15rem;
             font-weight: 800;
-            letter-spacing: 0.02em;
-            background: linear-gradient(135deg, #fff 30%, #aaa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-variant-numeric: tabular-nums;
         }
 
-        .app-header .sub {
-            font-size: 0.72rem;
+        .stat-value.green { color: var(--accent); }
+        .stat-value.blue  { color: #4fc3f7; }
+        .stat-value.gold  { color: #ffd700; }
+        .stat-value.red   { color: var(--danger); }
+        .stat-value.warn  { color: var(--warn); }
+
+        .stat-sub {
+            font-size: 0.62rem;
             color: var(--muted);
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
-        /* スコア */
-        .score-panel {
-            margin: 0 16px 12px;
-            padding: 14px 18px;
-            background: rgba(22,22,26,0.85);
-            backdrop-filter: blur(12px);
+        /* BANリスクゲージ */
+        .ban-gauge {
+            height: 5px;
+            background: #222;
+            border-radius: 3px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .ban-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease, background 0.5s;
+            width: 30%;
+            background: var(--accent);
+        }
+
+        .ban-fill.warn  { background: var(--warn); }
+        .ban-fill.danger { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+        /* 売上パネル */
+        .sales-panel {
+            margin: 0 12px 8px;
+            padding: 10px 14px;
+            background: rgba(22,22,26,0.9);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 14px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .sales-item .label { font-size: 0.58rem; color: var(--muted); }
+        .sales-item .val { font-size: 0.88rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+        .sales-item .val.plus { color: var(--accent); }
+        .sales-item .val.minus { color: var(--danger); }
+        .sales-item .val.net { color: #ffd700; }
+
+        /* 粉砕数 */
+        .score-panel {
+            margin: 0 12px 8px;
+            padding: 10px 14px;
+            background: rgba(22,22,26,0.85);
+            border: 1px solid var(--border);
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             z-index: 10;
         }
 
-        .score-label {
-            font-size: 0.78rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .score-value {
-            font-size: 2rem;
-            font-weight: 900;
-            color: var(--accent);
-            line-height: 1;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .score-value.bump {
-            animation: scoreBump 0.35s ease;
-        }
+        .score-label { font-size: 0.72rem; color: var(--muted); }
+        .score-value { font-size: 1.6rem; font-weight: 900; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .score-value.bump { animation: scoreBump 0.35s ease; }
 
         @keyframes scoreBump {
             0%   { transform: scale(1); }
@@ -159,52 +226,45 @@
             100% { transform: scale(1); }
         }
 
-        /* 通知エリア */
         .notification-zone {
             flex: 1;
             position: relative;
             margin: 0 12px;
-            border-radius: 20px;
+            border-radius: 18px;
             overflow: hidden;
+            background-image:
+                linear-gradient(180deg, rgba(8,8,12,0.88) 0%, rgba(8,8,12,0.7) 100%),
+                url('delivery-bg.png');
+            background-size: cover;
+            background-position: center;
         }
 
         .zone-hint {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--muted);
-            font-size: 0.82rem;
-            pointer-events: none;
-            opacity: 0.6;
-            text-align: center;
-            padding: 20px;
-            line-height: 1.6;
-            z-index: 0;
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--muted); font-size: 0.78rem;
+            pointer-events: none; opacity: 0.7;
+            text-align: center; padding: 20px; line-height: 1.6; z-index: 0;
         }
 
-        /* 通知カード */
         .card {
             position: absolute;
-            min-width: 200px;
-            max-width: 260px;
-            padding: 14px 16px;
-            background: var(--surface2);
+            min-width: 190px; max-width: 240px;
+            padding: 12px 14px;
+            background: rgba(30,30,36,0.95);
+            backdrop-filter: blur(8px);
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.05) inset;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             cursor: pointer;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             z-index: 5;
             animation: cardPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-            transition: transform 0.1s;
         }
 
         .card:active { transform: scale(0.96); }
-
         .card.type-money { border-left: 3px solid var(--accent); }
         .card.type-pin   { border-left: 3px solid var(--danger); }
         .card.type-order { border-left: 3px solid var(--warn); }
@@ -215,144 +275,90 @@
             to   { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        .card-app {
-            font-size: 0.65rem;
-            color: var(--muted);
-            margin-bottom: 6px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        .card-app { font-size: 0.62rem; color: var(--muted); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+        .card-app .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+        .card-title { font-size: 0.88rem; font-weight: 700; line-height: 1.35; }
+        .card-time { font-size: 0.6rem; color: var(--muted); margin-top: 6px; text-align: right; }
 
-        .card-app .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--accent);
-        }
-
-        .card-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            line-height: 1.35;
-            color: var(--text);
-        }
-
-        .card-time {
-            font-size: 0.65rem;
-            color: var(--muted);
-            margin-top: 8px;
-            text-align: right;
-        }
-
-        /* 粉砕エフェクト */
-        .card.destroying {
-            pointer-events: none;
-            animation: destroyCard 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-
+        .card.destroying { pointer-events: none; animation: destroyCard 0.55s cubic-bezier(0.22,1,0.36,1) forwards; }
         @keyframes destroyCard {
             0%   { transform: scale(1) rotate(0deg); filter: brightness(1); }
             20%  { transform: scale(1.15) rotate(-3deg); filter: brightness(2); }
-            50%  { transform: scale(0.8) rotate(8deg); opacity: 1; }
             100% { transform: scale(0) rotate(25deg); opacity: 0; }
         }
 
         .smash-text {
-            position: absolute;
-            font-size: 1.6rem;
-            font-weight: 900;
-            color: #fff;
-            text-shadow:
-                0 0 10px #ff3d57,
-                0 0 30px #ff3d57,
-                0 0 60px rgba(255,61,87,0.6);
-            pointer-events: none;
-            z-index: 50;
-            animation: smashPop 0.6s ease forwards;
-            white-space: nowrap;
+            position: absolute; font-size: 1.5rem; font-weight: 900; color: #fff;
+            text-shadow: 0 0 10px #ff3d57, 0 0 30px #ff3d57;
+            pointer-events: none; z-index: 50;
+            animation: smashPop 0.6s ease forwards; white-space: nowrap;
         }
 
         @keyframes smashPop {
             0%   { opacity: 0; transform: scale(0.3) rotate(-10deg); }
             30%  { opacity: 1; transform: scale(1.3) rotate(5deg); }
-            70%  { opacity: 1; transform: scale(1) rotate(0deg); }
             100% { opacity: 0; transform: scale(1.5) rotate(10deg) translateY(-30px); }
         }
 
         .particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 49;
+            position: absolute; width: 6px; height: 6px; border-radius: 50%;
+            pointer-events: none; z-index: 49;
             animation: particleFly 0.5s ease forwards;
         }
 
         @keyframes particleFly {
-            to {
-                transform: translate(var(--tx), var(--ty)) scale(0);
-                opacity: 0;
-            }
+            to { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
         }
 
         .flash-overlay {
-            position: absolute;
-            inset: 0;
+            position: absolute; inset: 0;
             background: rgba(255,61,87,0.15);
-            pointer-events: none;
-            z-index: 40;
+            pointer-events: none; z-index: 40;
             animation: flashFade 0.3s ease forwards;
         }
 
-        @keyframes flashFade {
-            from { opacity: 1; }
-            to   { opacity: 0; }
+        @keyframes flashFade { from { opacity: 1; } to { opacity: 0; } }
+
+        .toast {
+            position: absolute;
+            top: 8px; left: 50%; transform: translateX(-50%);
+            padding: 6px 14px;
+            background: rgba(255,61,87,0.9);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border-radius: 20px;
+            z-index: 60;
+            pointer-events: none;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 1.7s forwards;
+            white-space: nowrap;
         }
 
-        /* フッター */
+        @keyframes toastIn  { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+        @keyframes toastOut { to   { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+
         .app-footer {
-            padding: 14px 20px 28px;
-            background: rgba(10,10,12,0.95);
+            padding: 12px 16px 24px;
+            background: rgba(10,10,12,0.97);
             border-top: 1px solid var(--border);
             text-align: center;
             z-index: 10;
+            flex-shrink: 0;
         }
 
-        .app-footer p {
-            font-size: 0.78rem;
-            color: var(--muted);
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
+        .app-footer p { font-size: 0.72rem; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
 
         .invite-link {
             display: inline-block;
-            padding: 12px 20px;
+            padding: 11px 18px;
             background: linear-gradient(135deg, var(--accent-dim), var(--accent));
-            color: #000;
-            font-size: 0.88rem;
-            font-weight: 800;
-            text-decoration: none;
-            border-radius: 12px;
-            letter-spacing: 0.04em;
-            transition: transform 0.15s, box-shadow 0.15s;
+            color: #000; font-size: 0.82rem; font-weight: 800;
+            text-decoration: none; border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,200,83,0.3);
         }
 
-        .invite-link:active {
-            transform: scale(0.97);
-            box-shadow: 0 2px 10px rgba(0,200,83,0.2);
-        }
-
-        .home-bar {
-            width: 120px;
-            height: 4px;
-            background: #444;
-            border-radius: 2px;
-            margin: 12px auto 0;
-        }
+        .invite-link:active { transform: scale(0.97); }
+        .home-bar { width: 100px; height: 4px; background: #444; border-radius: 2px; margin: 10px auto 0; }
     </style>
 </head>
 <body>
@@ -364,10 +370,47 @@
                 <span>配達モード</span>
             </div>
 
-            <header class="app-header">
-                <h1>配達員・逆襲のポチポチ</h1>
-                <p class="sub">通知をタップして粉砕せよ</p>
-            </header>
+            <div class="hero">
+                <img src="delivery-bg.png" alt="夜の配達">
+                <div class="hero-overlay">
+                    <h1>配達員・逆襲のポチポチ</h1>
+                    <p class="sub">通知を粉砕して生き残れ</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">感謝率</div>
+                    <div class="stat-value green" id="thanks">72%</div>
+                    <div class="stat-sub" id="thanksSub">普通</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">応答率</div>
+                    <div class="stat-value blue" id="response">94%</div>
+                    <div class="stat-sub" id="responseSub">良好</div>
+                </div>
+                <div class="stat-card wide">
+                    <div class="stat-label">アカウント停止リスク</div>
+                    <div class="stat-value warn" id="banLabel">様子見</div>
+                    <div class="ban-gauge"><div class="ban-fill" id="banFill"></div></div>
+                    <div class="stat-sub" id="banSub">放置すると審査が来るぞ</div>
+                </div>
+            </div>
+
+            <div class="sales-panel">
+                <div class="sales-item">
+                    <div class="label">売上</div>
+                    <div class="val plus" id="gross">¥0</div>
+                </div>
+                <div class="sales-item">
+                    <div class="label">手数料</div>
+                    <div class="val minus" id="fee">-¥0</div>
+                </div>
+                <div class="sales-item">
+                    <div class="label">受取額</div>
+                    <div class="val net" id="net">¥0</div>
+                </div>
+            </div>
 
             <div class="score-panel">
                 <span class="score-label">粉砕数</span>
@@ -382,8 +425,7 @@
                 <p>同じ苦しみを分かち合う仲間を募集してるぜ。</p>
                 <a class="invite-link"
                    href="https://www.uber.com/signup/drive/deliver/?invite_code=mwxmfvc"
-                   target="_blank"
-                   rel="noopener noreferrer">＞＞ ここから一緒に稼ぐ ＜＜</a>
+                   target="_blank" rel="noopener noreferrer">＞＞ ここから一緒に稼ぐ ＜＜</a>
                 <div class="home-bar"></div>
             </footer>
         </div>
@@ -391,10 +433,10 @@
 
     <script>
         const CARDS = [
-            { type: 'money', app: '配達アプリ', title: '100円: 階段3階' },
-            { type: 'money', app: '配達アプリ', title: '80円: エレベーターなし5階' },
-            { type: 'money', app: '配達アプリ', title: '120円: 駐禁で停められない' },
-            { type: 'money', app: '配達アプリ', title: '50円: 雨の中待機' },
+            { type: 'money', app: '配達アプリ', title: '100円: 階段3階', earn: 100 },
+            { type: 'money', app: '配達アプリ', title: '80円: エレベーターなし5階', earn: 80 },
+            { type: 'money', app: '配達アプリ', title: '120円: 駐禁で停められない', earn: 120 },
+            { type: 'money', app: '配達アプリ', title: '50円: 雨の中待機', earn: 50 },
             { type: 'pin',   app: 'ナビ',       title: 'ピンズレ: クソ客' },
             { type: 'pin',   app: 'ナビ',       title: 'ピンズレ: 建物が見つからない' },
             { type: 'pin',   app: 'ナビ',       title: 'ピンズレ: 川の真ん中' },
@@ -404,37 +446,95 @@
             { type: 'msg',   app: 'サポート',   title: '遅延報告をしてください' },
             { type: 'msg',   app: 'サポート',   title: '評価が下がりました' },
             { type: 'msg',   app: '店舗',       title: 'まだできてないのに来た？' },
-            { type: 'money', app: '配達アプリ', title: '100円: 階段3階（また）' },
+            { type: 'money', app: '配達アプリ', title: '100円: 階段3階（また）', earn: 100 },
             { type: 'pin',   app: 'ナビ',       title: 'ピンズレ: クソ客（再送）' },
         ];
 
-        let smashCount = 0;
-        let activeCards = 0;
+        const FEE_RATE = 0.28;
+        const BAN_LEVELS = [
+            { max: 20,  label: '安全圏',     sub: '今のところ余裕',     cls: '' },
+            { max: 40,  label: '様子見',     sub: '放置すると審査が来るぞ', cls: '' },
+            { max: 60,  label: '要注意',     sub: 'サポートが見てる',   cls: 'warn' },
+            { max: 80,  label: '審査モード', sub: 'もう逃げられない',   cls: 'warn' },
+            { max: 100, label: '凍結寸前',   sub: 'アカウントが震えてる', cls: 'danger' },
+        ];
+
+        const THANKS_LABELS = [
+            [50, '危険'], [65, '低い'], [75, '普通'], [85, '好評'], [95, '神対応'], [101, '伝説']
+        ];
+
+        let smashCount = 0, activeCards = 0;
+        let thanks = 72, response = 94, banRisk = 25;
+        let grossSales = 0;
         const MAX_CARDS = 5;
+
         const zone = document.getElementById('zone');
         const scoreEl = document.getElementById('score');
         const hint = document.getElementById('hint');
+        const els = {
+            thanks: document.getElementById('thanks'),
+            thanksSub: document.getElementById('thanksSub'),
+            response: document.getElementById('response'),
+            responseSub: document.getElementById('responseSub'),
+            banLabel: document.getElementById('banLabel'),
+            banFill: document.getElementById('banFill'),
+            banSub: document.getElementById('banSub'),
+            gross: document.getElementById('gross'),
+            fee: document.getElementById('fee'),
+            net: document.getElementById('net'),
+        };
+
+        function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+        function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+        function yen(n) { return '¥' + n.toLocaleString(); }
+
+        function labelFor(val, table) {
+            for (const [max, lbl] of table) if (val < max) return lbl;
+            return table[table.length - 1][1];
+        }
+
+        function updateStats() {
+            const fee = Math.round(grossSales * FEE_RATE);
+            const net = grossSales - fee;
+
+            els.thanks.textContent = thanks + '%';
+            els.thanksSub.textContent = labelFor(thanks, THANKS_LABELS);
+            els.response.textContent = response + '%';
+            els.responseSub.textContent = response >= 90 ? '良好' : response >= 75 ? '微妙' : '危険';
+
+            const ban = BAN_LEVELS.find(b => banRisk <= b.max) || BAN_LEVELS[BAN_LEVELS.length - 1];
+            els.banLabel.textContent = ban.label;
+            els.banLabel.className = 'stat-value ' + (ban.cls || 'warn');
+            els.banSub.textContent = ban.sub;
+            els.banFill.style.width = banRisk + '%';
+            els.banFill.className = 'ban-fill ' + ban.cls;
+
+            els.gross.textContent = yen(grossSales);
+            els.fee.textContent = '-' + yen(fee);
+            els.net.textContent = yen(net);
+        }
 
         function updateClock() {
-            const now = new Date();
+            const n = new Date();
             document.getElementById('clock').textContent =
-                `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
         }
         updateClock();
         setInterval(updateClock, 30000);
 
-        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
         function randomPos() {
-            const pad = 8;
-            const cardW = 220;
-            const cardH = 90;
+            const pad = 6, cardW = 200, cardH = 80;
             const w = zone.clientWidth - cardW - pad * 2;
             const h = zone.clientHeight - cardH - pad * 2;
-            return {
-                left: pad + Math.random() * Math.max(w, 0),
-                top:  pad + Math.random() * Math.max(h, 0)
-            };
+            return { left: pad + Math.random() * Math.max(w, 0), top: pad + Math.random() * Math.max(h, 0) };
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            zone.appendChild(t);
+            setTimeout(() => t.remove(), 2000);
         }
 
         function spawnParticles(x, y) {
@@ -442,8 +542,7 @@
             for (let i = 0; i < 12; i++) {
                 const p = document.createElement('div');
                 p.className = 'particle';
-                p.style.left = x + 'px';
-                p.style.top = y + 'px';
+                p.style.left = x + 'px'; p.style.top = y + 'px';
                 p.style.background = pick(colors);
                 const angle = (Math.PI * 2 * i) / 12;
                 const dist = 40 + Math.random() * 60;
@@ -454,15 +553,24 @@
             }
         }
 
-        function smashCard(card, e) {
+        function onCardExpired() {
+            banRisk = clamp(banRisk + 8, 0, 100);
+            thanks = clamp(thanks - 3, 0, 100);
+            response = clamp(response - 2, 0, 100);
+            updateStats();
+            if (banRisk >= 60) showToast('⚠ 停止リスク上昇！');
+        }
+
+        function smashCard(card, data) {
             if (card.classList.contains('destroying')) return;
 
             const rect = card.getBoundingClientRect();
-            const zoneRect = zone.getBoundingClientRect();
-            const cx = rect.left - zoneRect.left + rect.width / 2;
-            const cy = rect.top - zoneRect.top + rect.height / 2;
+            const zr = zone.getBoundingClientRect();
+            const cx = rect.left - zr.left + rect.width / 2;
+            const cy = rect.top - zr.top + rect.height / 2;
 
             card.classList.add('destroying');
+            clearTimeout(card._expireTimer);
 
             const flash = document.createElement('div');
             flash.className = 'flash-overlay';
@@ -485,9 +593,23 @@
             void scoreEl.offsetWidth;
             scoreEl.classList.add('bump');
 
-            activeCards--;
-            hint.style.opacity = activeCards > 0 ? '0' : '0.6';
+            thanks = clamp(thanks + (data.type === 'msg' ? 4 : 2), 0, 100);
+            response = clamp(response + 1, 0, 100);
+            banRisk = clamp(banRisk - 6, 0, 100);
 
+            if (data.earn) {
+                grossSales += data.earn;
+                showToast(`+${data.earn}円 売上計上`);
+            }
+
+            if (data.type === 'pin') {
+                thanks = clamp(thanks + 3, 0, 100);
+                showToast('ピンズレ粉砕！ ストレス解消');
+            }
+
+            updateStats();
+            activeCards--;
+            hint.style.opacity = activeCards > 0 ? '0' : '0.7';
             setTimeout(() => card.remove(), 550);
         }
 
@@ -506,23 +628,38 @@
                 <div class="card-time">たった今</div>
             `;
 
-            card.addEventListener('click', (e) => smashCard(card, e));
+            card._expireTimer = setTimeout(() => {
+                if (!card.classList.contains('destroying') && card.parentNode) {
+                    onCardExpired();
+                    card.remove();
+                    activeCards--;
+                    hint.style.opacity = activeCards > 0 ? '0' : '0.7';
+                }
+            }, 6000);
+
+            card.addEventListener('click', () => smashCard(card, data));
             zone.appendChild(card);
             activeCards++;
             hint.style.opacity = '0';
+
+            banRisk = clamp(banRisk + 2, 0, 100);
+            updateStats();
         }
 
         function scheduleSpawn() {
-            const delay = 800 + Math.random() * 2200;
-            setTimeout(() => {
-                spawnCard();
-                scheduleSpawn();
-            }, delay);
+            setTimeout(() => { spawnCard(); scheduleSpawn(); }, 900 + Math.random() * 2000);
         }
 
+        updateStats();
         scheduleSpawn();
-        setTimeout(spawnCard, 400);
-        setTimeout(spawnCard, 900);
+        setTimeout(spawnCard, 500);
+        setTimeout(spawnCard, 1100);
+
+        setInterval(() => {
+            response = clamp(response - 1 + Math.round(Math.random() * 2), 60, 100);
+            if (activeCards >= 3) banRisk = clamp(banRisk + 1, 0, 100);
+            updateStats();
+        }, 5000);
     </script>
 </body>
 </html>
