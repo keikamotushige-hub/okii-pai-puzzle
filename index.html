@@ -359,10 +359,112 @@
 
         .invite-link:active { transform: scale(0.97); }
         .home-bar { width: 100px; height: 4px; background: #444; border-radius: 2px; margin: 10px auto 0; }
+
+        /* 音量パネル */
+        .volume-panel {
+            margin: 8px 12px 0;
+            padding: 12px 14px;
+            background: rgba(22,22,26,0.92);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            z-index: 10;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .volume-panel.maxed {
+            border-color: #ff3d57;
+            box-shadow: 0 0 20px rgba(255,61,87,0.35), 0 0 40px rgba(255,215,0,0.15);
+            animation: maxPulse 1.2s ease infinite;
+        }
+
+        @keyframes maxPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255,61,87,0.35); }
+            50%      { box-shadow: 0 0 30px rgba(255,61,87,0.6), 0 0 50px rgba(255,215,0,0.25); }
+        }
+
+        .volume-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .volume-header .label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .volume-header .status {
+            font-size: 0.68rem;
+            font-weight: 800;
+            color: var(--accent);
+            transition: color 0.3s;
+        }
+
+        .volume-panel.maxed .volume-header .status {
+            color: #ff3d57;
+            animation: textFlash 0.8s ease infinite;
+        }
+
+        @keyframes textFlash {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.6; }
+        }
+
+        .volume-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(90deg, #222, #444);
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #00e676);
+            box-shadow: 0 2px 8px rgba(0,200,83,0.5);
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .volume-panel.maxed .volume-slider::-webkit-slider-thumb {
+            background: linear-gradient(135deg, #ff3d57, #ffd700);
+            box-shadow: 0 0 16px rgba(255,61,87,0.8);
+            transform: scale(1.15);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 22px; height: 22px; border: none; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #00e676);
+            cursor: pointer;
+        }
+
+        .volume-hint {
+            font-size: 0.62rem;
+            color: var(--muted);
+            margin-top: 6px;
+            text-align: center;
+        }
+
+        .volume-panel.maxed .volume-hint {
+            color: #ff8a80;
+            font-weight: 700;
+        }
+
+        .phone.max-vibe .notification-zone {
+            box-shadow: inset 0 0 30px rgba(255,61,87,0.08);
+        }
     </style>
 </head>
 <body>
-    <div class="phone">
+    <div class="phone" id="phone">
         <div class="notch"></div>
         <div class="app-screen">
             <div class="status-bar">
@@ -376,6 +478,15 @@
                     <h1>配達員・逆襲のポチポチ</h1>
                     <p class="sub">通知を粉砕して生き残れ</p>
                 </div>
+            </div>
+
+            <div class="volume-panel" id="volumePanel">
+                <div class="volume-header">
+                    <span class="label">🔊 ストレス解放ボリューム</span>
+                    <span class="status" id="volumeStatus">静音</span>
+                </div>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="0">
+                <p class="volume-hint" id="volumeHint">上げるほど効果音がデカくなる。MAXで音楽が覚醒する</p>
             </div>
 
             <div class="stats-grid">
@@ -432,6 +543,353 @@
     </div>
 
     <script>
+        /* ===== オーディオエンジン ===== */
+        const AudioEngine = {
+            ctx: null,
+            master: null,
+            musicBus: null,
+            sfxBus: null,
+            volume: 0,
+            step: 0,
+            timer: null,
+            layers: { pad: null, bass: null, hat: null, lead: null, chaos: null },
+            layerGains: {},
+
+            init() {
+                if (this.ctx) return;
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new Ctx();
+                this.master = this.ctx.createGain();
+                this.musicBus = this.ctx.createGain();
+                this.sfxBus = this.ctx.createGain();
+                this.compressor = this.ctx.createDynamicsCompressor();
+                this.compressor.threshold.value = -12;
+                this.compressor.ratio.value = 4;
+                this.musicBus.connect(this.compressor);
+                this.sfxBus.connect(this.compressor);
+                this.compressor.connect(this.master);
+                this.master.connect(this.ctx.destination);
+                this._createMusicLayers();
+                this.setVolume(this.volume);
+                this._startSequencer();
+            },
+
+            async unlock() {
+                if (!this.ctx) this.init();
+                if (this.ctx.state === 'suspended') await this.ctx.resume();
+            },
+
+            _createMusicLayers() {
+                const c = this.ctx;
+                const freqs = [55, 82.41, 110];
+
+                this.layers.pad = c.createOscillator();
+                this.layers.pad.type = 'sawtooth';
+                this.layers.pad.frequency.value = freqs[0];
+                const padF = c.createBiquadFilter();
+                padF.type = 'lowpass';
+                padF.frequency.value = 280;
+                this.layerGains.pad = c.createGain();
+                this.layerGains.pad.gain.value = 0;
+                this.layers.pad.connect(padF);
+                padF.connect(this.layerGains.pad);
+                this.layerGains.pad.connect(this.musicBus);
+                this.layers.pad.start();
+
+                this.layers.bass = c.createOscillator();
+                this.layers.bass.type = 'square';
+                this.layers.bass.frequency.value = freqs[0];
+                const bassF = c.createBiquadFilter();
+                bassF.type = 'lowpass';
+                bassF.frequency.value = 200;
+                this.layerGains.bass = c.createGain();
+                this.layerGains.bass.gain.value = 0;
+                this.layers.bass.connect(bassF);
+                bassF.connect(this.layerGains.bass);
+                this.layerGains.bass.connect(this.musicBus);
+                this.layers.bass.start();
+
+                this.layers.lead = c.createOscillator();
+                this.layers.lead.type = 'triangle';
+                this.layers.lead.frequency.value = 220;
+                this.layerGains.lead = c.createGain();
+                this.layerGains.lead.gain.value = 0;
+                this.layers.lead.connect(this.layerGains.lead);
+                this.layerGains.lead.connect(this.musicBus);
+                this.layers.lead.start();
+
+                this.layers.chaos = c.createOscillator();
+                this.layers.chaos.type = 'sawtooth';
+                this.layers.chaos.frequency.value = 440;
+                const chaosF = c.createBiquadFilter();
+                chaosF.type = 'bandpass';
+                chaosF.frequency.value = 800;
+                chaosF.Q.value = 8;
+                this.layerGains.chaos = c.createGain();
+                this.layerGains.chaos.gain.value = 0;
+                this.layers.chaos.connect(chaosF);
+                chaosF.connect(this.layerGains.chaos);
+                this.layerGains.chaos.connect(this.musicBus);
+                this.layers.chaos.start();
+            },
+
+            _startSequencer() {
+                const tick = () => {
+                    if (!this.ctx || this.volume <= 0) return;
+                    const t = this.ctx.currentTime;
+                    const v = this.volume / 100;
+                    const maxed = this.volume >= 100;
+                    const bpm = maxed ? 148 : v > 0.6 ? 118 : 92;
+                    const beat = 60 / bpm / 2;
+
+                    if (this.step % 2 === 0 && v > 0.15) {
+                        this._pulseBass(t, maxed ? 0.35 * v : 0.2 * v);
+                    }
+                    if (this.step % 2 === 1 && v > 0.35) {
+                        this.playHat(t, maxed ? 0.5 : 0.25);
+                    }
+                    if (this.step % 4 === 0 && v > 0.55) {
+                        this._playLeadNote(t, maxed);
+                    }
+                    if (maxed && this.step % 3 === 0) {
+                        this._chaosBlip(t);
+                    }
+
+                    this.step++;
+                    this.timer = setTimeout(tick, beat * 1000);
+                };
+                tick();
+            },
+
+            _pulseBass(t, vol) {
+                const g = this.layerGains.bass.gain;
+                const notes = [55, 55, 73.42, 82.41, 55, 98, 82.41, 110];
+                const freq = notes[this.step % notes.length];
+                this.layers.bass.frequency.setValueAtTime(freq, t);
+                g.cancelScheduledValues(t);
+                g.setValueAtTime(vol * 0.5, t);
+                g.exponentialRampToValueAtTime(0.001, t + 0.15);
+            },
+
+            _playLeadNote(t, maxed) {
+                const scale = maxed
+                    ? [220, 277.18, 329.63, 440, 523.25, 659.25, 440, 329.63]
+                    : [220, 261.63, 329.63, 392, 329.63, 261.63];
+                const freq = scale[this.step % scale.length];
+                const g = this.layerGains.lead.gain;
+                this.layers.lead.frequency.setValueAtTime(freq, t);
+                g.cancelScheduledValues(t);
+                g.setValueAtTime(maxed ? 0.22 : 0.1, t);
+                g.exponentialRampToValueAtTime(0.001, t + (maxed ? 0.25 : 0.18));
+            },
+
+            _chaosBlip(t) {
+                const g = this.layerGains.chaos.gain;
+                this.layers.chaos.frequency.setValueAtTime(300 + Math.random() * 600, t);
+                g.cancelScheduledValues(t);
+                g.setValueAtTime(0.12, t);
+                g.exponentialRampToValueAtTime(0.001, t + 0.08);
+            },
+
+            playHat(t, vol) {
+                const c = this.ctx;
+                const len = c.sampleRate * 0.04;
+                const buf = c.createBuffer(1, len, c.sampleRate);
+                const d = buf.getChannelData(0);
+                for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+                const src = c.createBufferSource();
+                src.buffer = buf;
+                const g = c.createGain();
+                g.gain.value = vol;
+                const f = c.createBiquadFilter();
+                f.type = 'highpass';
+                f.frequency.value = 8000;
+                src.connect(f);
+                f.connect(g);
+                g.connect(this.musicBus);
+                src.start(t);
+            },
+
+            setVolume(pct) {
+                this.volume = pct;
+                const v = pct / 100;
+                const maxed = pct >= 100;
+
+                if (this.ctx) {
+                    this.master.gain.setTargetAtTime(Math.min(v * 1.1, 1), this.ctx.currentTime, 0.05);
+                    this.musicBus.gain.setTargetAtTime(v * (maxed ? 0.85 : 0.55), this.ctx.currentTime, 0.05);
+                    this.sfxBus.gain.setTargetAtTime(v * (maxed ? 1.6 : 1.2), this.ctx.currentTime, 0.05);
+
+                    if (this.layerGains.pad) {
+                        this.layerGains.pad.gain.setTargetAtTime(v > 0 ? 0.04 + v * 0.06 : 0, this.ctx.currentTime, 0.1);
+                    }
+                }
+
+                const panel = document.getElementById('volumePanel');
+                const phone = document.getElementById('phone');
+                const status = document.getElementById('volumeStatus');
+                const hint = document.getElementById('volumeHint');
+
+                panel.classList.toggle('maxed', maxed);
+                phone.classList.toggle('max-vibe', maxed);
+
+                if (pct === 0) {
+                    status.textContent = '静音';
+                    hint.textContent = '上げるほど効果音がデカくなる。MAXで音楽が覚醒する';
+                } else if (pct < 40) {
+                    status.textContent = 'ちょい解放';
+                    hint.textContent = 'もっと上げろ…ストレスが抜けていく';
+                } else if (pct < 70) {
+                    status.textContent = 'ストレス中';
+                    hint.textContent = 'ビートが乗ってきた。粉砕が気持ちいい';
+                } else if (pct < 100) {
+                    status.textContent = '高火力';
+                    hint.textContent = 'あと少し…MAXまで上げろ！';
+                } else {
+                    status.textContent = '🔥 MAX覚醒 🔥';
+                    hint.textContent = '音楽フルパワー！ 容赦なく粉砕しろ！！';
+                }
+            },
+
+            playSmash() {
+                if (!this.ctx || this.volume <= 0) return;
+                const c = this.ctx;
+                const t = c.currentTime;
+                const punch = this.volume >= 100 ? 1.8 : 1.0 + this.volume / 100;
+
+                const osc = c.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(180, t);
+                osc.frequency.exponentialRampToValueAtTime(40, t + 0.12);
+                const g = c.createGain();
+                g.gain.setValueAtTime(0.6 * punch, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+                osc.connect(g);
+                g.connect(this.sfxBus);
+                osc.start(t);
+                osc.stop(t + 0.25);
+
+                const len = c.sampleRate * 0.15;
+                const buf = c.createBuffer(1, len, c.sampleRate);
+                const d = buf.getChannelData(0);
+                for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+                const noise = c.createBufferSource();
+                noise.buffer = buf;
+                const ng = c.createGain();
+                ng.gain.setValueAtTime(0.5 * punch, t);
+                ng.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+                noise.connect(ng);
+                ng.connect(this.sfxBus);
+                noise.start(t);
+
+                if (this.volume >= 100) {
+                    const o2 = c.createOscillator();
+                    o2.type = 'square';
+                    o2.frequency.setValueAtTime(880, t);
+                    o2.frequency.exponentialRampToValueAtTime(110, t + 0.08);
+                    const g2 = c.createGain();
+                    g2.gain.setValueAtTime(0.25, t);
+                    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+                    o2.connect(g2);
+                    g2.connect(this.sfxBus);
+                    o2.start(t);
+                    o2.stop(t + 0.12);
+                }
+            },
+
+            playSpawn() {
+                if (!this.ctx || this.volume <= 0) return;
+                const c = this.ctx;
+                const t = c.currentTime;
+                const vol = 0.15 + (this.volume / 100) * 0.35;
+                const osc = c.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, t);
+                osc.frequency.exponentialRampToValueAtTime(660, t + 0.08);
+                const g = c.createGain();
+                g.gain.setValueAtTime(vol, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+                osc.connect(g);
+                g.connect(this.sfxBus);
+                osc.start(t);
+                osc.stop(t + 0.12);
+            },
+
+            playMoney() {
+                if (!this.ctx || this.volume <= 0) return;
+                const c = this.ctx;
+                const t = c.currentTime;
+                const vol = 0.2 + (this.volume / 100) * 0.5;
+                [1200, 1600].forEach((f, i) => {
+                    const o = c.createOscillator();
+                    o.type = 'sine';
+                    o.frequency.value = f;
+                    const g = c.createGain();
+                    g.gain.setValueAtTime(0, t + i * 0.06);
+                    g.gain.linearRampToValueAtTime(vol, t + i * 0.06 + 0.02);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.06 + 0.2);
+                    o.connect(g);
+                    g.connect(this.sfxBus);
+                    o.start(t + i * 0.06);
+                    o.stop(t + i * 0.06 + 0.25);
+                });
+            },
+
+            playWarning() {
+                if (!this.ctx || this.volume <= 0) return;
+                const c = this.ctx;
+                const t = c.currentTime;
+                const vol = 0.25 + (this.volume / 100) * 0.55;
+                const o = c.createOscillator();
+                o.type = 'square';
+                o.frequency.setValueAtTime(200, t);
+                o.frequency.setValueAtTime(280, t + 0.1);
+                const g = c.createGain();
+                g.gain.setValueAtTime(vol, t);
+                g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+                o.connect(g);
+                g.connect(this.sfxBus);
+                o.start(t);
+                o.stop(t + 0.3);
+            },
+
+            playMaxUnlock() {
+                if (!this.ctx) return;
+                const c = this.ctx;
+                const t = c.currentTime;
+                [440, 554, 659, 880].forEach((f, i) => {
+                    const o = c.createOscillator();
+                    o.type = 'triangle';
+                    o.frequency.value = f;
+                    const g = c.createGain();
+                    g.gain.setValueAtTime(0, t + i * 0.08);
+                    g.gain.linearRampToValueAtTime(0.35, t + i * 0.08 + 0.03);
+                    g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.4);
+                    o.connect(g);
+                    g.connect(this.sfxBus);
+                    o.start(t + i * 0.08);
+                    o.stop(t + i * 0.08 + 0.45);
+                });
+            }
+        };
+
+        const volumeSlider = document.getElementById('volumeSlider');
+        let wasMaxed = false;
+
+        volumeSlider.addEventListener('input', async (e) => {
+            await AudioEngine.unlock();
+            const val = parseInt(e.target.value, 10);
+            AudioEngine.setVolume(val);
+            if (val >= 100 && !wasMaxed) {
+                wasMaxed = true;
+                AudioEngine.playMaxUnlock();
+                showToast('🔥 MAX覚醒！ 音楽フルパワー！');
+            }
+            if (val < 100) wasMaxed = false;
+        });
+
+        document.body.addEventListener('click', () => AudioEngine.unlock(), { once: true });
+
         const CARDS = [
             { type: 'money', app: '配達アプリ', title: '100円: 階段3階', earn: 100 },
             { type: 'money', app: '配達アプリ', title: '80円: エレベーターなし5階', earn: 80 },
@@ -558,7 +1016,10 @@
             thanks = clamp(thanks - 3, 0, 100);
             response = clamp(response - 2, 0, 100);
             updateStats();
-            if (banRisk >= 60) showToast('⚠ 停止リスク上昇！');
+            if (banRisk >= 60) {
+                showToast('⚠ 停止リスク上昇！');
+                AudioEngine.playWarning();
+            }
         }
 
         function smashCard(card, data) {
@@ -586,6 +1047,7 @@
             setTimeout(() => txt.remove(), 600);
 
             spawnParticles(cx, cy);
+            AudioEngine.playSmash();
 
             smashCount++;
             scoreEl.textContent = smashCount;
@@ -600,6 +1062,7 @@
             if (data.earn) {
                 grossSales += data.earn;
                 showToast(`+${data.earn}円 売上計上`);
+                AudioEngine.playMoney();
             }
 
             if (data.type === 'pin') {
@@ -641,6 +1104,7 @@
             zone.appendChild(card);
             activeCards++;
             hint.style.opacity = '0';
+            AudioEngine.playSpawn();
 
             banRisk = clamp(banRisk + 2, 0, 100);
             updateStats();
