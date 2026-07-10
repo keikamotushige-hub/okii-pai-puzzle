@@ -3,402 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="大きい牌 — ワンタップで300円を稼げ。落とし前をつけられるか？ 架空のフィクションゲーム。">
-    <meta property="og:title" content="大きい牌">
-    <meta property="og:description" content="シャバの300円、稼げるか？ 落とし前をつけられる男だけが生き残る。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://keikamotushige-hub.github.io/okii-pai-puzzle/">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="大きい牌">
-    <meta name="twitter:description" content="シャバの300円、稼げるか？">
-    <title>大きい牌</title>
+    <title>最後・大きい置き配</title>
     <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        body {
-            background: #000;
-            color: #d1d1d1;
-            text-align: center;
-            font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+        body { 
+            background: #000; 
+            color: #d1d1d1; 
+            text-align: center; 
+            font-family: 'Hiragino Kaku Gothic ProN', sans-serif; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
             margin: 0;
-        }
-        .container {
-            border: 3px solid #8b0000;
-            padding: 36px 28px;
-            max-width: 500px;
-            width: 100%;
-            background: #0a0a0a;
-            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
-            transition: box-shadow 0.3s;
-        }
-        .container.hot { box-shadow: 0 0 40px rgba(255, 0, 0, 0.7); }
-        .container.legend { box-shadow: 0 0 50px rgba(255, 215, 0, 0.8); border-color: #ffd700; }
-        h1 {
-            color: #fff;
-            letter-spacing: 5px;
-            margin: 0 0 6px;
-            font-size: 1.8rem;
-        }
-        .tagline {
-            color: #666;
-            font-size: 0.8rem;
-            margin-bottom: 24px;
-        }
-        #display-area {
-            min-height: 100px;
-            font-size: 1.15rem;
-            margin: 24px 0;
-            display: flex;
-            align-items: center;
+            min-height: 100vh;
             justify-content: center;
-            border-top: 1px solid #333;
-            border-bottom: 1px solid #333;
-            padding: 16px 12px;
-            line-height: 1.6;
-            transition: color 0.2s;
         }
-        #display-area.danger { color: #ff6b6b; }
-        #display-area.gold { color: #ffd700; }
-        #display-area.dead { color: #888; font-style: italic; }
-        .hud {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 8px;
+        .container { 
+            border: 3px solid #8b0000; 
+            padding: 40px; 
+            max-width: 500px; 
+            width: 90%;
+            background: #0a0a0a; 
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
         }
-        .hud-item { font-size: 0.9rem; color: #888; }
-        .hud-item span { color: #ffd700; font-weight: bold; font-size: 1.1rem; }
-        #score { font-size: 1.6rem; color: #ffd700; margin: 8px 0 20px; font-weight: bold; }
-        #score.pop { animation: pop 0.4s ease; }
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.25); color: #fff; }
-            100% { transform: scale(1); }
-        }
-        .streak-bar {
-            height: 4px;
-            background: #222;
-            border-radius: 2px;
-            margin: 0 0 20px;
-            overflow: hidden;
-        }
-        .streak-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #8b0000, #ff4444);
-            transition: width 0.3s;
-        }
-        .btn {
-            padding: 16px 32px;
-            font-size: 1.15rem;
-            cursor: pointer;
-            background: #8b0000;
-            color: #fff;
-            border: none;
-            font-weight: bold;
-            transition: 0.3s;
-            width: 100%;
-            max-width: 320px;
-        }
-        .btn:hover:not(:disabled) { background: #ff0000; transform: scale(1.02); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn.share {
-            background: #1a1a2e;
-            border: 1px solid #444;
-            margin-top: 10px;
-            font-size: 0.95rem;
-        }
-        .btn.share:hover { background: #2a2a4e; }
-        #rank-badge {
-            display: none;
-            margin: 16px 0 8px;
-            padding: 10px 20px;
-            border: 2px solid #ffd700;
-            color: #ffd700;
-            font-size: 1.1rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-        }
-        #rank-badge.show { display: inline-block; animation: pop 0.5s ease; }
-        .best-score {
-            font-size: 0.8rem;
-            color: #555;
-            margin-top: 16px;
-        }
-        .footer-note {
-            max-width: 500px;
-            margin-top: 20px;
-            font-size: 0.72rem;
-            color: #444;
-            line-height: 1.6;
-            text-align: left;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-8px); }
-            40% { transform: translateX(8px); }
-            60% { transform: translateX(-6px); }
-            80% { transform: translateX(6px); }
-        }
-        .shake { animation: shake 0.4s ease; }
-        @keyframes flash {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-        .flash { animation: flash 0.2s ease 2; }
+        h1 { color: #fff; letter-spacing: 5px; margin-bottom: 30px; font-size: 1.8rem; border-bottom: 2px solid #8b0000; padding-bottom: 10px; }
+        #display-area { height: 120px; font-size: 1.2rem; margin: 30px 0; display: flex; align-items: center; justify-content: center; border-top: 1px solid #333; border-bottom: 1px solid #333; }
+        .btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; background: #8b0000; color: #fff; border: none; font-weight: bold; transition: 0.3s; width: 100%; margin-top: 10px; }
+        .btn:hover { background: #ff0000; }
+        #score { font-size: 1.5rem; color: #ffd700; margin-top: 20px; font-weight: bold; }
+        .footer-link { margin-top: 30px; border-top: 1px solid #333; padding-top: 20px; font-size: 0.9rem; color: #666; }
+        .footer-link a { color: #888; text-decoration: none; border-bottom: 1px solid #444; }
+        .footer-link a:hover { color: #fff; }
     </style>
 </head>
 <body>
-    <!--
-        Uber 配達パートナー登録（招待コード: xpaknqb）
-        https://www.uber.com/signup/drive/deliver/?invite_code=xpaknqb
-    -->
-    <div class="container" id="container">
-        <h1>大きい牌</h1>
-        <p class="tagline">ワンタップ置き配 — 落とし前をつけられるか</p>
-
+    <div class="container">
+        <h1>最後・大きい置き配</h1>
         <div id="display-area">「……シャバの300円、稼ぐ準備はいいか。」</div>
-
-        <div class="hud">
-            <div class="hud-item">連続 <span id="streak">0</span> 回</div>
-            <div class="hud-item">置き配 <span id="turns">0</span> 回</div>
-        </div>
-        <div class="streak-bar"><div class="streak-fill" id="streakFill"></div></div>
-
+        <button class="btn" id="actionBtn" onclick="gameLogic()">置き配を実行する</button>
         <div id="score">稼ぎ：0円</div>
-        <div id="rank-badge"></div>
-
-        <button class="btn" id="actionBtn">置き配を実行する</button>
-        <button class="btn share hidden" id="shareBtn">結果をポストする</button>
-
-        <p class="best-score" id="bestScore"></p>
+        
+        <div class="footer-link">
+            <p>筋の通った生き方をしたい奴は<br>
+            <a href="https://www.uber.com/signup/drive/deliver/?invite_code=mwxmfvc" target="_blank">こちらから組織へ繋がれ</a></p>
+        </div>
     </div>
-
-    <p class="footer-note">
-        ※ 本作は完全に架空のフィクションゲームです。実在の企業・サービス・人物とは無関係であり、
-        配達・報酬に関する描写はゲーム内の演出にすぎません。Uber 等の商標は各権利者に帰属します。
-    </p>
-
     <script>
-        // Uber 配達パートナー登録 — 招待コード: xpaknqb
-        // https://www.uber.com/signup/drive/deliver/?invite_code=xpaknqb
-
-        const GAME_URL = 'https://keikamotushige-hub.github.io/okii-pai-puzzle/';
-
-        const THREATS = [
-            '「お前、置き場所が気に食わねえんだよ」と詰められた。',
-            '「汁がこぼれてるぞ。落とし前はどうすんだ」と脅された。',
-            '「面構えが気に食わねえ。落とし前、つけんのか？」と凄まれた。',
-            '「お辞儀が浅いんじゃねえか？」と冷徹に指摘された。',
-            '「その牌、デカすぎんだよ……」と呆れられた。',
-            '「客が待ってる。急げ、急げ！」と怒鳴られた。',
-            '「今日の担当、お前か……」とため息をつかれた。'
-        ];
-
-        const WINS = [
-            '「……精々、死なねえ程度に稼ぐんだな。」',
-            '「悪くねえ置き方だ。」',
-            '「今日は運がついてるな。」',
-            '「その調子で回せ。」',
-            '「客も満足してる。続けろ。」'
-        ];
-
-        const STREAK_LINES = [
-            null,
-            null,
-            '「2連続か……まあ、まだ甘い。」',
-            '「3連続？ 調子に乗るなよ。」',
-            '「4連続……お前、なかなかやるじゃねえか。」',
-            '「5連続！？ こいつ、本物かもしれねえ……」',
-            '「6連続……今日は神が乗ってるな。」',
-            '「7連続……置き配の申し子だ。」',
-            '「8連続以上……伝説が始まった。」'
-        ];
-
-        const LEGENDARY = [
-            { text: '【伝説】完全ノーリスク置き配！ 客も組も満足！', payout: 3000, cls: 'legend' },
-            { text: '【奇跡】大当たり置き配！ 今日の星はお前だ！', payout: 1500, cls: 'legend' },
-            { text: '【レア】VIP客からの心付けが舞い込んだ！', payout: 900, cls: 'gold' }
-        ];
-
-        const RANKS = [
-            { min: 0,    title: '見習い',       quote: '「……まだ足りねえ。出直してこい。」' },
-            { min: 600,  title: '置き配係',     quote: '「600円……今日はここまでか。」' },
-            { min: 1500, title: '汁なし男',     quote: '「1500円。汁をこぼさなかっただけマシだ。」' },
-            { min: 3000, title: '落とし前の達人', quote: '「3000円。お前、本気出したな。」' },
-            { min: 6000, title: '300円の神',    quote: '「6000円……お前、人間じゃねえだろ。」' },
-            { min: 9000, title: '大きい牌の王',  quote: '「9000円。伝説に名前が刻まれた。」' }
-        ];
-
         let money = 0;
-        let streak = 0;
-        let turns = 0;
         let gameOver = false;
-        let awaitingResolve = false;
-        let bestEver = parseInt(localStorage.getItem('okii-pai-best') || '0', 10);
-
-        const el = {
-            container: document.getElementById('container'),
-            display: document.getElementById('display-area'),
-            score: document.getElementById('score'),
-            streak: document.getElementById('streak'),
-            turns: document.getElementById('turns'),
-            streakFill: document.getElementById('streakFill'),
-            actionBtn: document.getElementById('actionBtn'),
-            shareBtn: document.getElementById('shareBtn'),
-            rankBadge: document.getElementById('rank-badge'),
-            bestScore: document.getElementById('bestScore')
-        };
-
-        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-        function getRank(m) {
-            let rank = RANKS[0];
-            for (const r of RANKS) { if (m >= r.min) rank = r; }
-            return rank;
-        }
-
-        function streakMultiplier() {
-            return 1 + Math.min(streak, 10) * 0.1;
-        }
-
-        function updateHUD() {
-            el.streak.textContent = streak;
-            el.turns.textContent = turns;
-            el.score.textContent = `稼ぎ：${money.toLocaleString()}円`;
-            el.streakFill.style.width = `${Math.min(streak / 10 * 100, 100)}%`;
-            el.bestScore.textContent = bestEver > 0 ? `自己ベスト：${bestEver.toLocaleString()}円` : '';
-        }
-
-        function setDisplay(text, cls) {
-            el.display.className = cls || '';
-            el.display.textContent = text;
-        }
-
-        function popScore() {
-            el.score.classList.remove('pop');
-            void el.score.offsetWidth;
-            el.score.classList.add('pop');
-        }
-
-        function shake() {
-            el.container.classList.add('shake');
-            setTimeout(() => el.container.classList.remove('shake'), 400);
-        }
-
-        function checkLegendary() {
-            const roll = Math.random();
-            if (roll < 0.008) return LEGENDARY[0];
-            if (roll < 0.025) return LEGENDARY[1];
-            if (roll < 0.06)  return LEGENDARY[2];
-            return null;
-        }
-
+        const threats = [
+            "「お前、置き場所が気に食わねえんだよ」と詰められた。",
+            "「汁がこぼれてるぞ。落とし前はどうすんだ」と脅された。",
+            "「面構えが気に食わねえ。落とし前、つけんのか？」と凄まれた。",
+            "「お辞儀が浅いんじゃねえか？」と冷徹に指摘された。"
+        ];
         function gameLogic() {
-            if (gameOver) { location.reload(); return; }
-
-            if (awaitingResolve) {
-                resolve();
-                return;
-            }
-
-            turns++;
-            const legendary = checkLegendary();
-
-            if (legendary) {
-                const gain = Math.round(legendary.payout * streakMultiplier());
-                money += gain;
-                streak++;
-                el.container.className = 'container ' + legendary.cls;
-                setDisplay(legendary.text, 'gold');
-                popScore();
-                updateHUD();
-                if (STREAK_LINES[Math.min(streak, STREAK_LINES.length - 1)]) {
-                    setTimeout(() => {
-                        setDisplay(STREAK_LINES[Math.min(streak, STREAK_LINES.length - 1)], 'gold');
-                    }, 1200);
-                }
-                setTimeout(() => { el.container.className = 'container'; }, 2000);
-                return;
-            }
-
+            if(gameOver) { location.reload(); return; }
+            
             if (Math.random() < 0.35) {
-                awaitingResolve = true;
-                el.container.className = 'container hot';
-                setDisplay(pick(THREATS), 'danger');
-                el.actionBtn.textContent = '落とし前をつける';
-                shake();
-                return;
-            }
-
-            const base = 300;
-            const gain = Math.round(base * streakMultiplier());
-            money += gain;
-            streak++;
-            popScore();
-            setDisplay(pick(WINS));
-
-            if (streak >= 2 && STREAK_LINES[Math.min(streak, STREAK_LINES.length - 1)]) {
-                setTimeout(() => {
-                    if (!awaitingResolve && !gameOver) {
-                        setDisplay(STREAK_LINES[Math.min(streak, STREAK_LINES.length - 1)]);
-                    }
-                }, 800);
-            }
-
-            updateHUD();
-        }
-
-        function resolve() {
-            awaitingResolve = false;
-            el.container.className = 'container';
-
-            if (Math.random() > 0.5) {
-                streak++;
-                const gain = Math.round(300 * streakMultiplier());
-                money += gain;
-                popScore();
-                setDisplay('「次はねえぞ……失せろ。」');
-                el.actionBtn.textContent = '置き配を実行する';
-                updateHUD();
+                document.getElementById('display-area').innerText = threats[Math.floor(Math.random() * threats.length)];
+                document.getElementById('actionBtn').innerText = "落とし前をつける";
+                document.getElementById('actionBtn').onclick = resolve;
             } else {
-                endGame();
+                money += 300;
+                document.getElementById('score').innerText = `稼ぎ：${money}円`;
+                document.getElementById('display-area').innerText = "「……精々、死なねえ程度に稼ぐんだな。」";
             }
         }
-
-        function endGame() {
-            gameOver = true;
-            streak = 0;
-            const rank = getRank(money);
-
-            if (money > bestEver) {
-                bestEver = money;
-                localStorage.setItem('okii-pai-best', String(bestEver));
+        function resolve() {
+            if(Math.random() > 0.5) {
+                document.getElementById('display-area').innerText = "「次はねえぞ……失せろ。」";
+                document.getElementById('actionBtn').innerText = "置き配を実行する";
+                document.getElementById('actionBtn').onclick = gameLogic;
+            } else {
+                document.getElementById('display-area').innerText = "「甘いんだよ……。」――ゲームオーバー。";
+                gameOver = true;
+                document.getElementById('actionBtn').innerText = "再出航";
             }
-
-            setDisplay(`「甘いんだよ……。」\n${rank.quote}`, 'dead');
-            el.rankBadge.textContent = `称号：${rank.title}`;
-            el.rankBadge.classList.add('show');
-            el.actionBtn.textContent = '再出航';
-            el.shareBtn.classList.remove('hidden');
-            updateHUD();
         }
-
-        function shareResult() {
-            const rank = getRank(money);
-            const text = `大きい牌で${money.toLocaleString()}円稼いだ。\n称号「${rank.title}」\nあなたはいくら稼げる？`;
-            const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(GAME_URL)}`;
-            window.open(url, '_blank', 'noopener,noreferrer');
-        }
-
-        el.actionBtn.addEventListener('click', gameLogic);
-        el.shareBtn.addEventListener('click', shareResult);
-        updateHUD();
     </script>
 </body>
 </html>
