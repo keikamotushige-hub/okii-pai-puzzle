@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="大きい牌 — 置き配パズル。架空のフィクションゲームです。">
+    <title>大きい牌 — 置き配パズル</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background: #000;
+            color: #d1d1d1;
+            text-align: center;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            border: 3px solid #8b0000;
+            padding: 32px 24px;
+            max-width: 560px;
+            width: 100%;
+            background: #0a0a0a;
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
+        }
+        h1 {
+            color: #fff;
+            letter-spacing: 5px;
+            margin: 0 0 8px;
+            font-size: 1.8rem;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+        #display-area {
+            min-height: 72px;
+            font-size: 1.05rem;
+            margin: 16px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 12px;
+            line-height: 1.5;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            gap: 12px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+        .stat {
+            font-size: 0.95rem;
+            color: #aaa;
+        }
+        .stat strong { color: #ffd700; }
+        .puzzle-label {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin: 16px 0 8px;
+        }
+        .target-row, .hand-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0;
+        }
+        .target-row { min-height: 64px; }
+        .tile {
+            width: 52px;
+            height: 68px;
+            border: 2px solid #444;
+            border-radius: 6px;
+            background: linear-gradient(145deg, #f5f0e8, #e8dfd0);
+            color: #1a1a1a;
+            font-size: 1.4rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+            user-select: none;
+        }
+        .tile.man { color: #c0392b; }
+        .tile.pin { color: #2980b9; }
+        .tile.sou { color: #27ae60; }
+        .tile.hint {
+            background: #222;
+            color: #555;
+            border-color: #333;
+            cursor: default;
+            font-size: 1rem;
+        }
+        .tile.selected {
+            border-color: #ffd700;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+            transform: translateY(-4px);
+        }
+        .tile.used {
+            opacity: 0.35;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+        .tile:not(.hint):not(.used):hover {
+            border-color: #8b0000;
+            transform: translateY(-2px);
+        }
+        .slot {
+            width: 52px;
+            height: 68px;
+            border: 2px dashed #555;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            background: #111;
+        }
+        .slot.filled {
+            border-style: solid;
+            border-color: #666;
+            background: linear-gradient(145deg, #f5f0e8, #e8dfd0);
+        }
+        .btn {
+            padding: 14px 28px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            background: #8b0000;
+            color: #fff;
+            border: none;
+            font-weight: bold;
+            transition: 0.3s;
+            margin: 6px;
+        }
+        .btn:hover:not(:disabled) { background: #ff0000; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn.secondary { background: #333; }
+        .btn.secondary:hover:not(:disabled) { background: #555; }
+        .actions { margin-top: 16px; }
+        .progress-bar {
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b0000, #ffd700);
+            width: 0%;
+            transition: width 0.4s;
+        }
+        .footer-note {
+            max-width: 560px;
+            margin-top: 20px;
+            font-size: 0.75rem;
+            color: #555;
+            line-height: 1.6;
+            text-align: left;
+        }
+        .hidden { display: none !important; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.35s ease; }
+    </style>
+</head>
+<body>
+    <!--
+        Uber 配達パートナー登録（招待コード: xpaknqb）
+        https://www.uber.com/signup/drive/deliver/?invite_code=xpaknqb
+    -->
+    <div class="container">
+        <h1>大きい牌</h1>
+        <p class="subtitle">置き配パズル — 正しい順番で牌を並べろ</p>
+
+        <div id="display-area">「……シャバの300円、稼ぐ準備はいいか。」</div>
+
+        <div class="stats">
+            <span class="stat">稼ぎ：<strong id="score">0</strong>円</span>
+            <span class="stat">ステージ：<strong id="stage">1</strong></span>
+            <span class="stat">体力：<strong id="lives">3</strong></span>
+        </div>
+
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+        <div id="puzzle-area">
+            <p class="puzzle-label">注文（この順番で置け）</p>
+            <div class="target-row" id="target-slots"></div>
+
+            <p class="puzzle-label">手牌（タップで選択）</p>
+            <div class="hand-row" id="hand"></div>
+        </div>
+
+        <div id="resolve-area" class="hidden">
+            <p class="puzzle-label">落とし前 — 同じ牌のペアを2組見つけろ</p>
+            <div class="hand-row" id="memory-grid"></div>
+        </div>
+
+        <div class="actions">
+            <button class="btn" id="actionBtn">置き配を実行する</button>
+            <button class="btn secondary hidden" id="resetBtn">やり直す</button>
+            <button class="btn secondary hidden" id="submitBtn">並べ替え確定</button>
+        </div>
+    </div>
+
+    <p class="footer-note">
+        ※ 本作は完全に架空のフィクションゲームです。実在の企業・サービス・人物とは無関係であり、
+        配達・報酬に関する描写はゲーム内の演出にすぎません。Uber 等の商標は各権利者に帰属します。
+    </p>
+
+    <script>
+        // Uber 配達パートナー登録 — 招待コード: xpaknqb
+        // https://www.uber.com/signup/drive/deliver/?invite_code=xpaknqb
+
+        const TILES = {
+            man: ['一', '二', '三', '四', '五', '六', '七', '八', '九'].map((n, i) => ({ suit: 'man', num: i + 1, label: n + '萬' })),
+            pin: ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'].map((n, i) => ({ suit: 'pin', num: i + 1, label: n })),
+            sou: ['🀇', '🀈', '🀉', '🀊', '🀋', '🀌', '🀍', '🀎', '🀏'].slice(0, 9).map((n, i) => ({ suit: 'sou', num: i + 1, label: String(i + 1) + '索' }))
+        };
+
+        const FLAVOR = {
+            start: '「……シャバの300円、稼ぐ準備はいいか。」',
+            success: ['「……精々、死なねえ程度に稼ぐんだな。」', '「今日は運がいいな。」', '「その置き方、悪くねえ。」'],
+            fail: ['「順番が違う。客が怒るぞ。」', '「置き場所が気に食わねえんだよ。」', '「面構えが気に食わねえ。」'],
+            threat: ['「汁がこぼれてるぞ。落とし前はどうすんだ。」', '「お辞儀が浅いんじゃねえか？」', '「落とし前、つけんのか？」'],
+            resolveWin: '「次はねえぞ……失せろ。」',
+            resolveLose: '「甘いんだよ……。」――ゲームオーバー。',
+            clear: '全ステージクリア！ 今日の営業は終了だ。',
+            stageUp: '次の注文が来た。集中しろ。'
+        };
+
+        let money = 0;
+        let stage = 1;
+        let lives = 3;
+        let gameOver = false;
+        let cleared = false;
+        let mode = 'puzzle'; // puzzle | resolve | menu
+
+        let targetSequence = [];
+        let playerSlots = [];
+        let handTiles = [];
+        let selectedHandIndex = null;
+
+        let memoryTiles = [];
+        let memoryFlipped = [];
+        let memoryMatched = 0;
+        let memoryLock = false;
+        let memoryMistakes = 0;
+        const MEMORY_PAIR_TARGET = 4;
+        const MEMORY_MAX_MISTAKES = 5;
+
+        const el = {
+            display: document.getElementById('display-area'),
+            score: document.getElementById('score'),
+            stage: document.getElementById('stage'),
+            lives: document.getElementById('lives'),
+            progress: document.getElementById('progress'),
+            targetSlots: document.getElementById('target-slots'),
+            hand: document.getElementById('hand'),
+            puzzleArea: document.getElementById('puzzle-area'),
+            resolveArea: document.getElementById('resolve-area'),
+            memoryGrid: document.getElementById('memory-grid'),
+            actionBtn: document.getElementById('actionBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            submitBtn: document.getElementById('submitBtn')
+        };
+
+        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function allTilesFlat() {
+            return [...TILES.man, ...TILES.pin, ...TILES.sou];
+        }
+
+        function sequenceLength() {
+            return Math.min(3 + Math.floor((stage - 1) / 2), 6);
+        }
+
+        function buildTarget() {
+            const suits = ['man', 'pin', 'sou'];
+            const suit = pick(suits);
+            const pool = TILES[suit];
+            const len = sequenceLength();
+            const start = Math.floor(Math.random() * (9 - len + 1));
+            return pool.slice(start, start + len);
+        }
+
+        function buildHand(target) {
+            const decoys = shuffle(allTilesFlat().filter(t =>
+                !target.some(g => g.suit === t.suit && g.num === t.num)
+            )).slice(0, Math.min(2 + stage, 5));
+            return shuffle([...target, ...decoys]);
+        }
+
+        function tileEl(tile, opts = {}) {
+            const div = document.createElement('div');
+            div.className = `tile ${tile.suit}`;
+            div.textContent = tile.label;
+            if (opts.selected) div.classList.add('selected');
+            if (opts.used) div.classList.add('used');
+            if (opts.hint) div.classList.add('hint');
+            return div;
+        }
+
+        function updateHUD() {
+            el.score.textContent = money;
+            el.stage.textContent = stage;
+            el.lives.textContent = lives;
+            const maxStage = 8;
+            el.progress.style.width = cleared ? '100%' : `${Math.min((stage - 1) / maxStage * 100, 100)}%`;
+        }
+
+        function renderTarget() {
+            el.targetSlots.innerHTML = '';
+            targetSequence.forEach((tile, i) => {
+                const slot = document.createElement('div');
+                slot.className = 'slot' + (playerSlots[i] ? ' filled' : '');
+                if (playerSlots[i]) {
+                    slot.classList.add(playerSlots[i].suit);
+                    slot.textContent = playerSlots[i].label;
+                    slot.style.color = playerSlots[i].suit === 'man' ? '#c0392b' : playerSlots[i].suit === 'pin' ? '#2980b9' : '#27ae60';
+                } else {
+                    slot.textContent = i + 1;
+                    slot.style.color = '#444';
+                }
+                el.targetSlots.appendChild(slot);
+            });
+        }
+
+        function renderHand() {
+            el.hand.innerHTML = '';
+            handTiles.forEach((tile, i) => {
+                const used = playerSlots.some(s => s && s.handIndex === i);
+                const t = tileEl(tile, { selected: selectedHandIndex === i, used });
+                if (!used) {
+                    t.addEventListener('click', () => selectHand(i));
+                }
+                el.hand.appendChild(t);
+            });
+        }
+
+        function selectHand(index) {
+            if (mode !== 'puzzle' || gameOver) return;
+            selectedHandIndex = index;
+            const emptySlot = playerSlots.findIndex(s => s === null);
+            if (emptySlot === -1) return;
+            playerSlots[emptySlot] = { ...handTiles[index], handIndex: index };
+            selectedHandIndex = null;
+            renderTarget();
+            renderHand();
+            el.submitBtn.classList.remove('hidden');
+        }
+
+        function resetPlacement() {
+            playerSlots = targetSequence.map(() => null);
+            selectedHandIndex = null;
+            renderTarget();
+            renderHand();
+        }
+
+        function startStage() {
+            if (gameOver || cleared) return;
+            mode = 'puzzle';
+            targetSequence = buildTarget();
+            playerSlots = targetSequence.map(() => null);
+            handTiles = buildHand(targetSequence);
+            selectedHandIndex = null;
+
+            el.puzzleArea.classList.remove('hidden');
+            el.resolveArea.classList.add('hidden');
+            el.actionBtn.classList.add('hidden');
+            el.resetBtn.classList.remove('hidden');
+            el.submitBtn.classList.remove('hidden');
+            el.submitBtn.disabled = false;
+
+            el.display.textContent = stage === 1 ? FLAVOR.start : FLAVOR.stageUp;
+            renderTarget();
+            renderHand();
+            updateHUD();
+        }
+
+        function checkPlacement() {
+            if (playerSlots.some(s => s === null)) {
+                el.display.textContent = 'まだ空きスロットがある。全部埋めろ。';
+                el.display.classList.add('shake');
+                setTimeout(() => el.display.classList.remove('shake'), 350);
+                return;
+            }
+
+            const correct = playerSlots.every((s, i) =>
+                s.suit === targetSequence[i].suit && s.num === targetSequence[i].num
+            );
+
+            if (correct) {
+                money += 300;
+                el.display.textContent = pick(FLAVOR.success);
+                if (stage >= 8) {
+                    cleared = true;
+                    gameOver = true;
+                    el.display.textContent = FLAVOR.clear;
+                    endGame('再出航');
+                    return;
+                }
+                stage++;
+                setTimeout(startStage, 900);
+            } else {
+                lives--;
+                el.display.textContent = pick(FLAVOR.fail);
+                el.display.classList.add('shake');
+                setTimeout(() => el.display.classList.remove('shake'), 350);
+                if (lives <= 0) {
+                    startResolve();
+                } else {
+                    resetPlacement();
+                }
+            }
+            updateHUD();
+        }
+
+        function startResolve() {
+            mode = 'resolve';
+            memoryMatched = 0;
+            memoryMistakes = 0;
+            memoryFlipped = [];
+            memoryLock = false;
+            el.display.textContent = pick(FLAVOR.threat);
+
+            const pairs = shuffle(allTilesFlat()).slice(0, 4);
+            memoryTiles = shuffle([...pairs, ...pairs]).map((t, i) => ({ ...t, id: i, matched: false }));
+
+            el.puzzleArea.classList.add('hidden');
+            el.resolveArea.classList.remove('hidden');
+            el.resetBtn.classList.add('hidden');
+            el.submitBtn.classList.add('hidden');
+            el.actionBtn.classList.remove('hidden');
+            el.actionBtn.textContent = '落とし前をつける（パズル中）';
+            el.actionBtn.disabled = true;
+
+            renderMemory();
+        }
+
+        function renderMemory() {
+            el.memoryGrid.innerHTML = '';
+            memoryTiles.forEach((tile, i) => {
+                const div = document.createElement('div');
+                const revealed = tile.matched || memoryFlipped.includes(i);
+                if (revealed) {
+                    div.className = `tile ${tile.suit}`;
+                    div.textContent = tile.label;
+                } else {
+                    div.className = 'tile hint';
+                    div.textContent = '?';
+                    div.addEventListener('click', () => flipMemory(i));
+                }
+                el.memoryGrid.appendChild(div);
+            });
+        }
+
+        function flipMemory(index) {
+            if (memoryLock || mode !== 'resolve') return;
+            const tile = memoryTiles[index];
+            if (tile.matched || memoryFlipped.includes(index)) return;
+
+            memoryFlipped.push(index);
+            renderMemory();
+
+            if (memoryFlipped.length < 2) return;
+
+            memoryLock = true;
+            const [a, b] = memoryFlipped;
+            const match = memoryTiles[a].suit === memoryTiles[b].suit && memoryTiles[a].num === memoryTiles[b].num;
+
+            setTimeout(() => {
+                if (match) {
+                    memoryTiles[a].matched = true;
+                    memoryTiles[b].matched = true;
+                    memoryMatched++;
+                    memoryFlipped = [];
+                    memoryLock = false;
+                    renderMemory();
+
+                    if (memoryMatched >= MEMORY_PAIR_TARGET) {
+                        lives = 1;
+                        el.display.textContent = FLAVOR.resolveWin;
+                        el.actionBtn.disabled = false;
+                        el.actionBtn.textContent = '置き配に戻る';
+                    }
+                } else {
+                    memoryMistakes++;
+                    memoryFlipped = [];
+                    memoryLock = false;
+                    renderMemory();
+                    if (memoryMistakes >= MEMORY_MAX_MISTAKES) {
+                        gameOver = true;
+                        el.display.textContent = FLAVOR.resolveLose;
+                        endGame('再出航');
+                    }
+                }
+            }, 700);
+        }
+
+        function returnFromResolve() {
+            if (memoryMatched < MEMORY_PAIR_TARGET) return;
+            mode = 'puzzle';
+            lives = 1;
+            el.resolveArea.classList.add('hidden');
+            el.puzzleArea.classList.remove('hidden');
+            el.actionBtn.classList.add('hidden');
+            el.resetBtn.classList.remove('hidden');
+            el.submitBtn.classList.remove('hidden');
+            resetPlacement();
+            updateHUD();
+        }
+
+        function endGame(btnLabel) {
+            el.puzzleArea.classList.add('hidden');
+            el.resolveArea.classList.add('hidden');
+            el.resetBtn.classList.add('hidden');
+            el.submitBtn.classList.add('hidden');
+            el.actionBtn.classList.remove('hidden');
+            el.actionBtn.disabled = false;
+            el.actionBtn.textContent = btnLabel;
+        }
+
+        function onAction() {
+            if (cleared || (gameOver && lives <= 0 && mode !== 'resolve')) {
+                location.reload();
+                return;
+            }
+            if (mode === 'menu') {
+                startStage();
+                return;
+            }
+            if (mode === 'resolve' && memoryMatched >= MEMORY_PAIR_TARGET) {
+                returnFromResolve();
+                return;
+            }
+        }
+
+        el.actionBtn.addEventListener('click', onAction);
+        el.resetBtn.addEventListener('click', resetPlacement);
+        el.submitBtn.addEventListener('click', checkPlacement);
+
+        mode = 'menu';
+        el.actionBtn.textContent = '置き配を実行する';
+        updateHUD();
+
+    </script>
+</body>
+</html>
